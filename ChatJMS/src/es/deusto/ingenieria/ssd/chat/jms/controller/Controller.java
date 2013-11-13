@@ -14,6 +14,7 @@ import java.util.Date;
 import javax.jms.JMSException;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.Session;
+import javax.jms.Topic;
 import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicPublisher;
@@ -49,8 +50,7 @@ public class Controller {
 	private boolean firstArrived;
 	private boolean alreadyExistsSent;
 	
-	private String connectionFactoryName = "TopicConnectionFactory";
-	private String topicJNDIName = "ChatTopic";		
+	private String topicName = "ChatTopic";		
 	
 	private TopicConnection topicConnection = null;
 	private TopicSession topicSession = null;
@@ -311,22 +311,19 @@ public class Controller {
 			Context ctx = new InitialContext();
 			 //Connection Factory
 			TopicConnectionFactory topicConnectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
-
-			System.out.println("- Queue Connection created!");
 			
-			
-			Session topicSession = topicConnectionFactory.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-			
-					
 			topicConnection = topicConnectionFactory.createTopicConnection();
-			topicConnection.setClientID("SSDD_TopicSubscriber");
+			TopicSession topicSession = topicConnection.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
+			Topic myTopic = topicSession.createTopic(topicName);
 			System.out.println("- Topic Connection created!");
 			
 			//Topic Listener
-			topicSubscriber = topicSession.createSubscriber(myTopic, subscriberID, "Filter = '1'", false);
+			topicSubscriber = topicSession.createSubscriber(myTopic, null, false);
 			TopicListener topicListener = new TopicListener();
 			topicSubscriber.setMessageListener(topicListener);
 			
+			//Begin message delivery
+			topicConnection.start();
 			
 			
 						
