@@ -11,12 +11,27 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import javax.jms.JMSException;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.Session;
+import javax.jms.TopicConnection;
+import javax.jms.TopicConnectionFactory;
+import javax.jms.TopicPublisher;
+import javax.jms.TopicSession;
+import javax.jms.TopicSubscriber;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.activemq.ActiveMQConnectionFactory;
+
 import es.deusto.ingenieria.ssd.chat.jms.client.MulticastClient;
 import es.deusto.ingenieria.ssd.chat.jms.data.Message;
 import es.deusto.ingenieria.ssd.chat.jms.data.User;
 import es.deusto.ingenieria.ssd.chat.jms.data.UserList;
 import es.deusto.ingenieria.ssd.chat.jms.exceptions.IncorrectMessageException;
 import es.deusto.ingenieria.ssd.chat.jms.gui.JFrameMainWindow;
+
 
 public class Controller {
 	public String ip;
@@ -33,6 +48,17 @@ public class Controller {
 	// indica si a llegado el primer mensaje de login
 	private boolean firstArrived;
 	private boolean alreadyExistsSent;
+	
+	private String connectionFactoryName = "TopicConnectionFactory";
+	private String topicJNDIName = "ChatTopic";		
+	
+	private TopicConnection topicConnection = null;
+	private TopicSession topicSession = null;
+	private TopicPublisher topicPublisher = null;
+	private TopicSubscriber topicSubscriber = null;
+	private String subscriberID = "SubscriberID";
+	
+	
 
 	// tiene a la ventana y el hilo
 	public Controller(JFrameMainWindow jFrameMainWindow) {
@@ -276,19 +302,64 @@ public class Controller {
 	}
 
 	public boolean connect(String ip, int port, String nick) throws IOException {
-		this.initFlags();
-		this.port = port;
-		this.multicastSocket = new MulticastSocket(port);
-		this.group = InetAddress.getByName(ip);
-		multicastSocket.joinGroup(group);
-		userList = new UserList();
-		this.connectedUser = new User(nick);
-		userList.add(connectedUser);
-		String message = "101&" + this.connectedUser.getNick();
-		sendDatagramPacket(message);
-		MulticastClient multicastClient = new MulticastClient(this);
-		multicastClient.start();
-		return true;
+		
+		try {
+			this.initFlags();
+			this.port = port;
+			//connect
+			//JNDI Initial Context
+			Context ctx = new InitialContext();
+			 //Connection Factory
+			TopicConnectionFactory topicConnectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+
+			System.out.println("- Queue Connection created!");
+			
+			
+			Session topicSession = topicConnectionFactory.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+			
+					
+			topicConnection = topicConnectionFactory.createTopicConnection();
+			topicConnection.setClientID("SSDD_TopicSubscriber");
+			System.out.println("- Topic Connection created!");
+			
+			//Topic Listener
+			topicSubscriber = topicSession.createSubscriber(myTopic, subscriberID, "Filter = '1'", false);
+			TopicListener topicListener = new TopicListener();
+			topicSubscriber.setMessageListener(topicListener);
+			
+			
+			
+						
+			userList = new UserList();
+			this.connectedUser = new User(nick);
+			userList.add(connectedUser);
+			String message = "101&" + this.connectedUser.getNick();
+			sendDatagramPacket(message);
+			MulticastClient multicastClient = new MulticastClient(this);
+			multicastClient.start();
+			return true;
+		} catch (NamingException e) {
+			System.err.println("# TopicPublisherTest Error: " + e.getMessage());
+			return false;
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		finally {
+			try {
+				//Close resources
+				topicPublisher.close();
+				topicSession.close();
+				topicConnection.close();
+				System.out.println("- Topic resources closed!");				
+			} catch (Exception ex) {
+				System.err.println("# TopicPublisherTest Error: " + ex.getMessage());
+			}			
+		}
+		
+		
+		
 	}
 
 	public boolean disconnect() {
