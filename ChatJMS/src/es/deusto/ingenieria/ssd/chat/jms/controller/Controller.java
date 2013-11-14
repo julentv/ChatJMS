@@ -14,6 +14,7 @@ import java.util.Date;
 import javax.jms.JMSException;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
@@ -325,6 +326,30 @@ public class Controller {
 			//Begin message delivery
 			topicConnection.start();
 			
+			//Wait for messages
+			System.out.println("- Waiting 10 seconds for messages...");
+			Thread.sleep(10000);
+			
+			//TOPIC PUBLISHER
+			//Message Publisher
+			topicPublisher = topicSession.createPublisher(myTopic);
+			System.out.println("- TopicPublisher created!");
+			
+			//Text Message
+			TextMessage textMessage = topicSession.createTextMessage();
+			//Message Headers
+			textMessage.setJMSType("TextMessage");
+			textMessage.setJMSMessageID("ID-1");
+			textMessage.setJMSPriority(1);
+			//Message Properties
+			textMessage.setStringProperty("Filter", "1");			
+			//Message Body
+			textMessage.setText("Hello World!!");
+			
+			
+			//Publish the Messages
+			topicPublisher.publish(textMessage);
+			System.out.println("- TextMessage published in the Topic!");			
 			
 						
 			userList = new UserList();
@@ -335,14 +360,10 @@ public class Controller {
 			MulticastClient multicastClient = new MulticastClient(this);
 			multicastClient.start();
 			return true;
-		} catch (NamingException e) {
+		} catch (Exception e) {
 			System.err.println("# TopicPublisherTest Error: " + e.getMessage());
 			return false;
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		}
+		} 
 		finally {
 			try {
 				//Close resources
