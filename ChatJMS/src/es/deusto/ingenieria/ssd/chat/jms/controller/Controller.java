@@ -9,6 +9,7 @@ import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.jms.JMSException;
@@ -341,11 +342,10 @@ public class Controller {
 			userList = new UserList();
 			this.connectedUser = new User(nick);
 			userList.add(connectedUser);
-			Message connnectMessage= new Message();
-			String message = "101&" + this.connectedUser.getNick();
-			sendDatagramPacket(message);
-			MulticastClient multicastClient = new MulticastClient(this);
-			multicastClient.start();
+			Message connnectMessage= new Message(Calendar.getInstance().getTimeInMillis(), null, 101, this.connectedUser, null);
+			//String message = "101&" + this.connectedUser.getNick();
+			publishMessage(connnectMessage);
+			
 			return true;
 		} catch (Exception e) {
 			System.err.println("# TopicPublisherTest Error: " + e.getMessage());
