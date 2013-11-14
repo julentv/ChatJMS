@@ -397,7 +397,7 @@ public class JFrameMainWindow extends JFrame implements Observer, WindowListener
 	//This method is used when the user close the chat window with (X).
 	@Override
 	public void windowClosing(WindowEvent e) {
-		System.out.println("mierad");
+		
 		System.out.println(this.controller.disconnect());
 			System.exit(0);
 	}
