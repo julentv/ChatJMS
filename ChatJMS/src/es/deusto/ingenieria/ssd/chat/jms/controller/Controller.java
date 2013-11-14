@@ -25,11 +25,7 @@ import javax.jms.TopicSession;
 import javax.jms.TopicSubscriber;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
-
 import org.apache.activemq.ActiveMQConnectionFactory;
-
-import es.deusto.ingenieria.ssd.chat.jms.client.MulticastClient;
 import es.deusto.ingenieria.ssd.chat.jms.data.Message;
 import es.deusto.ingenieria.ssd.chat.jms.data.User;
 import es.deusto.ingenieria.ssd.chat.jms.data.UserList;
@@ -102,6 +98,7 @@ public class Controller {
 		String messageToSend;
 		String warningMessage;
 		String time;
+		Message messageSent;
 		
 		// Si el que envia el sms no soy yo mirar si el sms es para mi
 		if (this.firstArrived){
@@ -129,9 +126,9 @@ public class Controller {
 								if (userList.getLastUser().getNick()
 										.equals(connectedUser.getNick())) {
 									this.userList.add(this.message.getFrom());
-									Message list= new Message(Calendar.getInstance().getTimeInMillis(),null, 108, connectedUser, null);
+									messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 108, connectedUser, null);
 //									
-									publishMessage(list);
+									publishMessage(messageSent);
 								} else {
 									this.userList.add(this.message.getFrom());
 								}
@@ -142,11 +139,10 @@ public class Controller {
 								// 301
 								if (this.message.getFrom().getNick()
 										.equals(connectedUser.getNick())) {
-
-									messageToSend = "301&"
-											+ this.connectedUser.getNick();
+									messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 301, connectedUser, null);
+									
 									this.alreadyExistsSent = true;
-									sendDatagramPacket(messageToSend);
+									publishMessage(messageSent);
 									
 								}
 							}
@@ -163,10 +159,9 @@ public class Controller {
 								if (acceptInvitation) {
 									this.chatReceiver = new User(message
 											.getFrom().getNick());
-									messageToSend = "103&"
-											+ this.connectedUser.getNick()
-											+ "&" + chatReceiver.getNick();
-									sendDatagramPacket(messageToSend);
+									messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 103, connectedUser, chatReceiver);
+									publishMessage(messageSent);
+									
 									time = textFormatter.format(new Date());
 									warningMessage = " " + time
 											+ ": BEGINING OF THE CONVERSATION WITH ["
@@ -175,19 +170,15 @@ public class Controller {
 											Color.GREEN);
 									
 								} else {
-									messageToSend = "104&"
-											+ this.connectedUser.getNick()
-											+ "&" + message
-											.getFrom().getNick();
-									sendDatagramPacket(messageToSend);
+									messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 104, connectedUser, message.getFrom());
+									publishMessage(messageSent);
+									
 								}
 							} else {
 								// si ya estoy hablando mandar already chatting
-								messageToSend = "303&"
-										+ this.connectedUser.getNick() + "&"
-										+ message.getFrom().getNick();
-								sendDatagramPacket(messageToSend);
-
+								messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 303, connectedUser, message.getFrom());
+								publishMessage(messageSent);
+								
 							}
 
 							break;
@@ -422,8 +413,8 @@ public class Controller {
 	public boolean sendChatClosure() {
 
 		// ENTER YOUR CODE TO SEND A CHAT CLOSURE
-		String message = "105&" + this.connectedUser.getNick()+"&"+this.chatReceiver.getNick();
-		sendDatagramPacket(message);
+		Message messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 105, connectedUser, chatReceiver);
+		publishMessage(messageSent);
 		this.chatReceiver = null;
 
 		return true;
@@ -431,17 +422,19 @@ public class Controller {
 
 	public void establishConnection(String nickToConnect){
 		if(this.chatReceiver==null){
-			String message="102&"+this.getConnectedUser().getNick()+"&"+nickToConnect;
-			sendDatagramPacket(message);
+			Message messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 102, connectedUser, new User(nickToConnect));
+			publishMessage(messageSent);
+			
 		}else{
 			String messageToReject="Do you want to close the conversation?";
 			boolean close=this.window.acceptWindow(messageToReject, "Close chat session");
 			if(close){
-				String message="105&"+this.getConnectedUser().getNick()+"&"+this.chatReceiver.getNick();
-				sendDatagramPacket(message);
+				Message messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 105, connectedUser,chatReceiver);
+				publishMessage(messageSent);
+				
 				this.window.listUsers.clearSelection();
 				String time = textFormatter.format(new Date());		
-				message = " " + time + ": CONVERSATION FINISHED\n";
+				String message = " " + time + ": CONVERSATION FINISHED\n";
 				this.window.appendMessageToHistory(message, Color.GREEN);
 				this.chatReceiver=null;
 				this.window.setTitle("Chat main window - 'Connected'");
