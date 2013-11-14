@@ -12,7 +12,13 @@ import org.apache.activemq.command.ActiveMQMapMessage;
 import org.apache.activemq.command.ActiveMQTextMessage;
 
 public class TopicListener implements MessageListener {
+	private Controller controller;
+	
 
+	public TopicListener(Controller controller) {
+		super();
+		this.controller = controller;
+	}
 	@Override
 	public void onMessage(Message message) {		
 		if (message != null) {
