@@ -59,6 +59,9 @@ public class Controller {
 	private TopicSubscriber topicSubscriber = null;
 	private String subscriberID = "SubscriberID";
 	
+	public static final String MESSAGE_TYPE= "messageType";
+	public static final String NICK_TO= "nickTo";
+	public static final String NICK_FROM= "nickFrom";
 	
 
 	// tiene a la ventana y el hilo
@@ -320,7 +323,7 @@ public class Controller {
 			
 			//Topic Listener
 			topicSubscriber = topicSession.createSubscriber(myTopic, null, false);
-			TopicListener topicListener = new TopicListener();
+			TopicListener topicListener = new TopicListener(this);
 			topicSubscriber.setMessageListener(topicListener);
 			
 			//Begin message delivery
@@ -334,27 +337,11 @@ public class Controller {
 			//Message Publisher
 			topicPublisher = topicSession.createPublisher(myTopic);
 			System.out.println("- TopicPublisher created!");
-			
-			//Text Message
-			TextMessage textMessage = topicSession.createTextMessage();
-			//Message Headers
-			textMessage.setJMSType("TextMessage");
-			textMessage.setJMSMessageID("ID-1");
-			textMessage.setJMSPriority(1);
-			//Message Properties
-			textMessage.setStringProperty("Filter", "1");			
-			//Message Body
-			textMessage.setText("Hello World!!");
-			
-			
-			//Publish the Messages
-			topicPublisher.publish(textMessage);
-			System.out.println("- TextMessage published in the Topic!");			
-			
-						
+												
 			userList = new UserList();
 			this.connectedUser = new User(nick);
 			userList.add(connectedUser);
+			Message connnectMessage= new Message();
 			String message = "101&" + this.connectedUser.getNick();
 			sendDatagramPacket(message);
 			MulticastClient multicastClient = new MulticastClient(this);
@@ -377,6 +364,39 @@ public class Controller {
 		}
 		
 		
+		
+	}
+	
+	public void publishMessage(Message message){
+		//Text Message
+		TextMessage textMessage;
+		try {
+			textMessage = topicSession.createTextMessage();
+			//Message Headers
+			if (message.getMessageType()==108){
+				textMessage.setJMSType("ObjectMessage");
+			}else{
+				textMessage.setJMSType("TextMessage");
+			}
+			textMessage.setJMSTimestamp(message.getTimestamp());
+			//textMessage.setJMSMessageID("ID-1");
+			
+			//Message Properties
+			textMessage.setIntProperty("messageType", message.getMessageType());
+			textMessage.setStringProperty("nickTo", message.getTo().getNick());
+			textMessage.setStringProperty("nickFrom", message.getFrom().getNick());
+			
+			//Message Body
+			textMessage.setText("Hello World!!");
+			
+			
+			//Publish the Messages
+			topicPublisher.publish(textMessage);
+			System.out.println("- TextMessage published in the Topic!");	
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 
