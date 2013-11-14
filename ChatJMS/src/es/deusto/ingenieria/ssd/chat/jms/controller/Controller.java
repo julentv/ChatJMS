@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import javax.jms.JMSException;
+import javax.jms.ObjectMessage;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.Session;
 import javax.jms.TextMessage;
@@ -90,38 +91,18 @@ public class Controller {
 		this.userList = userList;
 	}
 
-	private void generateMessage(String mess) throws IncorrectMessageException {
-		String[] arrMessage = mess.split("&");
-		this.message = new Message();
-		this.message.setFrom(this.userList.getUserByNick(arrMessage[1]));
-		if (this.message.getFrom() == null)
-			this.message.setFrom(new User(arrMessage[1]));
-		this.message.setMessageType(Integer.valueOf(arrMessage[0]));
-		if (this.message.hasUserTo()) {
-			this.message.setTo(this.userList.getUserByNick(arrMessage[2]));
-
-			if (arrMessage.length > 3)
-				this.message.setText(mess.substring(arrMessage[0].length()
-						+ arrMessage[1].length() + arrMessage[2].length() + 3));
-		} else {
-			if (arrMessage.length > 2)
-				this.message.setText(mess.substring(arrMessage[0].length()
-						+ arrMessage[1].length() + 2));
-		}
+	public void sendMessage(Message message) {
+		
+		publishMessage(message);
 	}
 
-	public void sendMessage(String message) {
-		sendDatagramPacket(message);
-	}
-
-	public void proccesInputMessage(String receivedMessage)
+	public void proccesInputMessage(Message message)
 			throws IncorrectMessageException {
 		// el switch case con todos los mensajes aqui.
 		String messageToSend;
 		String warningMessage;
 		String time;
-		generateMessage(receivedMessage);
-
+		
 		// Si el que envia el sms no soy yo mirar si el sms es para mi
 		if (this.firstArrived){
 			if (!(this.alreadyExistsSent && this.message.isNickAlreadyExistMessage())) {
@@ -148,10 +129,9 @@ public class Controller {
 								if (userList.getLastUser().getNick()
 										.equals(connectedUser.getNick())) {
 									this.userList.add(this.message.getFrom());
-									messageToSend = "108&"
-											+ this.connectedUser.getNick()
-											+ userList.toString();
-									sendDatagramPacket(messageToSend);
+									Message list= new Message(Calendar.getInstance().getTimeInMillis(),null, 108, connectedUser, null);
+//									
+									publishMessage(list);
 								} else {
 									this.userList.add(this.message.getFrom());
 								}
@@ -281,22 +261,22 @@ public class Controller {
 
 	}
 
-	private void sendDatagramPacket(String message) {
-		try {
-			DatagramPacket messageOut = new DatagramPacket(message.getBytes(),
-					message.length(), group, port);
-			multicastSocket.send(messageOut);
-			System.out.println(" - Sent a message to '"
-					+ messageOut.getAddress().getHostAddress() + ":"
-					+ messageOut.getPort() + "' -> "
-					+ new String(messageOut.getData()));
-
-		} catch (SocketException e) {
-			System.err.println("# Socket Error: " + e.getMessage());
-		} catch (IOException e) {
-			System.err.println("# IO Error: " + e.getMessage());
-		}
-	}
+//	private void sendDatagramPacket(String message) {
+//		try {
+//			DatagramPacket messageOut = new DatagramPacket(message.getBytes(),
+//					message.length(), group, port);
+//			multicastSocket.send(messageOut);
+//			System.out.println(" - Sent a message to '"
+//					+ messageOut.getAddress().getHostAddress() + ":"
+//					+ messageOut.getPort() + "' -> "
+//					+ new String(messageOut.getData()));
+//
+//		} catch (SocketException e) {
+//			System.err.println("# Socket Error: " + e.getMessage());
+//		} catch (IOException e) {
+//			System.err.println("# IO Error: " + e.getMessage());
+//		}
+//	}
 
 	public boolean isConnected() {
 		return this.connectedUser != null;
@@ -354,6 +334,7 @@ public class Controller {
 		finally {
 			try {
 				//Close resources
+				topicSubscriber.close();
 				topicPublisher.close();
 				topicSession.close();
 				topicConnection.close();
@@ -369,29 +350,33 @@ public class Controller {
 	
 	public void publishMessage(Message message){
 		//Text Message
-		TextMessage textMessage;
+		javax.jms.Message publishMessage;
+		
 		try {
-			textMessage = topicSession.createTextMessage();
+			
 			//Message Headers
 			if (message.getMessageType()==108){
-				textMessage.setJMSType("ObjectMessage");
+				publishMessage = topicSession.createObjectMessage();
+				publishMessage.setJMSType("ObjectMessage");
+				((ObjectMessage) publishMessage).setObject(this.userList);
 			}else{
-				textMessage.setJMSType("TextMessage");
+				publishMessage = topicSession.createTextMessage();
+				publishMessage.setJMSType("TextMessage");
+				//Message body
+				if(message.getText()!=null){
+					((TextMessage) publishMessage).setText(message.getText());
+				}
 			}
-			textMessage.setJMSTimestamp(message.getTimestamp());
+			publishMessage.setJMSTimestamp(message.getTimestamp());
 			//textMessage.setJMSMessageID("ID-1");
 			
 			//Message Properties
-			textMessage.setIntProperty("messageType", message.getMessageType());
-			textMessage.setStringProperty("nickTo", message.getTo().getNick());
-			textMessage.setStringProperty("nickFrom", message.getFrom().getNick());
-			
-			//Message Body
-			textMessage.setText("Hello World!!");
-			
+			publishMessage.setIntProperty("messageType", message.getMessageType());
+			publishMessage.setStringProperty("nickTo", message.getTo().getNick());
+			publishMessage.setStringProperty("nickFrom", message.getFrom().getNick());
 			
 			//Publish the Messages
-			topicPublisher.publish(textMessage);
+			topicPublisher.publish(publishMessage);
 			System.out.println("- TextMessage published in the Topic!");	
 		} catch (JMSException e) {
 			// TODO Auto-generated catch block
@@ -401,19 +386,32 @@ public class Controller {
 	}
 
 	public boolean disconnect() {
-
-		String message;
-		// //ENTER YOUR CODE TO DISCONNECT
-		if (isChatSessionOpened()) {
-			sendChatClosure();
-		}
-		message = "106&"+this.connectedUser.getNick();
-		sendDatagramPacket(message);
-		this.multicastSocket.close();
-		this.connectedUser = null;
-		this.chatReceiver = null;
 		
-		return true;
+		
+		try {
+			if (isChatSessionOpened()) {
+				sendChatClosure();
+			}
+			Message message= new Message(Calendar.getInstance().getTimeInMillis(),null, 106, this.connectedUser, null);
+			//message = "106&"+this.connectedUser.getNick();
+			//sendDatagramPacket(message);
+			publishMessage(message);
+			//Close resources
+			topicSubscriber.close();
+			topicPublisher.close();
+			topicSession.close();
+			topicConnection.close();
+			System.out.println("- Topic resources closed!");
+			this.connectedUser = null;
+			this.chatReceiver = null;
+			
+			return true;
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		
 	}
 
 	/**

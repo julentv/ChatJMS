@@ -1,12 +1,17 @@
 package es.deusto.ingenieria.ssd.chat.jms.data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import javax.swing.DefaultListModel;
 
 import es.deusto.ingenieria.ssd.chat.jms.data.User;
 
-public class UserList {
+public class UserList implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private ArrayList<User> listOfUsers;
 
 	public UserList() {

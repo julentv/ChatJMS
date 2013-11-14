@@ -12,6 +12,7 @@ import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
@@ -39,6 +40,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 import es.deusto.ingenieria.ssd.chat.jms.controller.Controller;
+import es.deusto.ingenieria.ssd.chat.jms.data.Message;
 import es.deusto.ingenieria.ssd.chat.jms.data.User;
 
 public class JFrameMainWindow extends JFrame implements Observer, WindowListener{
@@ -357,7 +359,9 @@ public class JFrameMainWindow extends JFrame implements Observer, WindowListener
 			String message = this.textAreaSendMsg.getText().trim();
 			
 			//message sent
-			controller.sendMessage("107&"+this.controller.connectedUser.getNick()+"&"+this.controller.chatReceiver.getNick()+"&"+message);
+			Message mess= new Message(Calendar.getInstance().getTimeInMillis(),message, 107, this.controller.connectedUser, this.controller.chatReceiver);
+			//controller.sendMessage("107&"+this.controller.connectedUser.getNick()+"&"+this.controller.chatReceiver.getNick()+"&"+message);
+			controller.sendMessage(mess);
 			String time = textFormatter.format(new Date());		
 			String sentMessage = " " + time + ":  ["+this.controller.connectedUser.getNick()+"]  " + message+"\n";
 			appendMessageToHistory(sentMessage, Color.BLUE);
