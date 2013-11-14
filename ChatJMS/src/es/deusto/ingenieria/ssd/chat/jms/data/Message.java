@@ -19,8 +19,6 @@ public class Message {
 	public static final int ERROR_MESSAGE_CONNECTION_FAILED=302;
 	public static final int ERROR_MESSAGE_USER_ALREADY_CHATTING=303;
 	public static final int ERROR_MESSAGE_MESSAGE_ERROR=305;
-	public static int [] NOTUSERTO={CLIENT_MESSAGE_LOGIN,CLIENT_MESSAGE_CLOSE_CONNECTION, CLIENT_MESSAGE_USER_LIST, ERROR_MESSAGE_EXISTING_NICK,ERROR_MESSAGE_CONNECTION_FAILED,ERROR_MESSAGE_MESSAGE_ERROR};
-	//Messages that are received by the server and this only responds with a simple message
 	
 	private long timestamp;
 	private String text;
@@ -102,12 +100,11 @@ public class Message {
 	           this.from + " -> " + this.to + " : " + this.text; 
 				
 	}
-	public boolean hasUserTo(){
-		for(int type:NOTUSERTO){
-			if(type==this.messageType)
-				return false;
-		}
-		return true;
+	public boolean isListUserMessage(){
+		if(this.messageType==CLIENT_MESSAGE_USER_LIST){
+			return true;
+		}else
+			return false;
 	}
 	public boolean isLogginMessage(){
 		if (this.messageType==Message.CLIENT_MESSAGE_LOGIN)

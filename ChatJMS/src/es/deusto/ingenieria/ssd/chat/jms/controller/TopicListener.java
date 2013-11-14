@@ -1,15 +1,13 @@
 package es.deusto.ingenieria.ssd.chat.jms.controller;
-
-import java.util.Enumeration;
-
 import javax.jms.JMSException;
-import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageListener;
+import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
 
-import org.apache.activemq.command.ActiveMQMapMessage;
-import org.apache.activemq.command.ActiveMQTextMessage;
+import es.deusto.ingenieria.ssd.chat.jms.data.User;
+import es.deusto.ingenieria.ssd.chat.jms.data.UserList;
+import es.deusto.ingenieria.ssd.chat.jms.exceptions.IncorrectMessageException;
 
 public class TopicListener implements MessageListener {
 	private Controller controller;
@@ -23,26 +21,14 @@ public class TopicListener implements MessageListener {
 	public void onMessage(Message message) {		
 		if (message != null) {
 			try {
-				System.out.println("   - TopicListener: " + message.getClass().getSimpleName() + " received!");
-				
-				if (message.getClass().getCanonicalName().equals(ActiveMQTextMessage.class.getCanonicalName())) {
-					System.out.println("     - TopicListener: TextMessage '" + ((TextMessage)message).getText());
-				} else if (message.getClass().getCanonicalName().equals(ActiveMQMapMessage.class.getCanonicalName())) {
-					System.out.println("     - TopicListener: MapMessage");				
-					MapMessage mapMsg = ((MapMessage) message);
-					
-					@SuppressWarnings("unchecked")
-					Enumeration<String> mapKeys = (Enumeration<String>)mapMsg.getMapNames();
-					String key = null;
-					
-					while (mapKeys.hasMoreElements()) {
-						key = mapKeys.nextElement();
-						System.out.println("       + " + key + ": " + mapMsg.getObject(key));
-					}								
-				}
-			
-			} catch (Exception ex) {
+				System.out.println("   - TopicListener: " + message.getClass().getSimpleName() + " received!");				
+				es.deusto.ingenieria.ssd.chat.jms.data.Message mensajeParseado=generateMessage(message);
+				this.controller.proccesInputMessage(mensajeParseado);				
+			} catch (JMSException ex) {
 				System.err.println("# TopicListener error: " + ex.getMessage());
+			} catch (IncorrectMessageException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		
@@ -50,7 +36,22 @@ public class TopicListener implements MessageListener {
 	private es.deusto.ingenieria.ssd.chat.jms.data.Message generateMessage(Message message) throws JMSException{
 		es.deusto.ingenieria.ssd.chat.jms.data.Message mensajeParseado= new es.deusto.ingenieria.ssd.chat.jms.data.Message();
 		mensajeParseado.setMessageType(message.getIntProperty("messageType"));
-		//this.message.setFrom(this.userList.getUserByNick());
+		mensajeParseado.setFrom(controller.getUserList().getUserByNick(message.getStringProperty(Controller.NICK_FROM)));
+		if (mensajeParseado.getFrom() == null){
+			//si el usuario del que proviene el mensaje no existe en la lista se crea
+			mensajeParseado.setFrom(new User(message.getStringProperty(Controller.NICK_FROM)));
+		}
+		if(!message.getStringProperty(Controller.NICK_FROM).equals("")){
+			//hay user to --> meterlo en el mensaje
+			mensajeParseado.setTo(controller.getUserList().getUserByNick(message.getStringProperty(Controller.NICK_FROM)));
+		}
+		if(mensajeParseado.isListUserMessage()){
+			//el mensaje recibido es un ObjectMessage
+			controller.setUserList((UserList)((ObjectMessage)message).getObject());
+		}else{
+			//el mensaje recibido es un TextMessage
+			mensajeParseado.setText(((TextMessage)message).getText());
+		}
 		
 		return mensajeParseado;
 	}
