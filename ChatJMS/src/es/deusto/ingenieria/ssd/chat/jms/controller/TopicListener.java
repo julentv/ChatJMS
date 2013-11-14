@@ -2,6 +2,7 @@ package es.deusto.ingenieria.ssd.chat.jms.controller;
 
 import java.util.Enumeration;
 
+import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -39,5 +40,12 @@ public class TopicListener implements MessageListener {
 			}
 		}
 		
+	}
+	private es.deusto.ingenieria.ssd.chat.jms.data.Message generateMessage(Message message) throws JMSException{
+		es.deusto.ingenieria.ssd.chat.jms.data.Message mensajeParseado= new es.deusto.ingenieria.ssd.chat.jms.data.Message();
+		mensajeParseado.setMessageType(message.getIntProperty("messageType"));
+		//this.message.setFrom(this.userList.getUserByNick());
+		
+		return mensajeParseado;
 	}
 }

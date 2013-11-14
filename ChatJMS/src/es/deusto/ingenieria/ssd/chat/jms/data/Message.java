@@ -23,12 +23,6 @@ public class Message {
 	//Messages that are received by the server and this only responds with a simple message
 	
 	private long timestamp;
-	public int getMessageType() {
-		return messageType;
-	}
-	public void setMessageType(int messageType) {
-		this.messageType = messageType;
-	}
 	private String text;
 	private int messageType;
 	private User from;
@@ -39,6 +33,25 @@ public class Message {
 	public Message(){
 		
 	}
+	
+	public Message(long timestamp, String text, int messageType, User from,
+			User to) {
+		super();
+		this.timestamp = timestamp;
+		this.text = text;
+		this.messageType = messageType;
+		this.from = from;
+		this.to = to;
+	}
+
+	public int getMessageType() {
+		return messageType;
+	}
+	
+	public void setMessageType(int messageType) {
+		this.messageType = messageType;
+	}
+	
 	public long getTimestamp() {
 		return timestamp;
 	}
