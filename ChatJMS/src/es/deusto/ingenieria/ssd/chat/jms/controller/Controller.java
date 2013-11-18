@@ -84,6 +84,7 @@ public class Controller {
 
 	public void setUserList(UserList userList) {
 		this.userList = userList;
+		this.window.refreshUserList();
 	}
 
 	public void sendMessage(Message message) {
@@ -215,8 +216,7 @@ public class Controller {
 									Color.MAGENTA);
 							break;
 						case Message.CLIENT_MESSAGE_USER_LIST:
-							this.userList.fromString(message.getText());
-							this.window.refreshUserList();
+							//do nothing
 							break;
 						case Message.ERROR_MESSAGE_EXISTING_NICK:
 							if(message.getFrom().getNick().equals(this.connectedUser.getNick())){
