@@ -45,7 +45,7 @@ public class TopicListener implements MessageListener {
 		}
 		if(!message.getStringProperty(Controller.NICK_FROM).equals("")){
 			//hay user to --> meterlo en el mensaje
-			mensajeParseado.setTo(controller.getUserList().getUserByNick(message.getStringProperty(Controller.NICK_FROM)));
+			mensajeParseado.setTo(controller.getUserList().getUserByNick(message.getStringProperty(Controller.NICK_TO)));
 		}
 		if(mensajeParseado.isListUserMessage()){
 			//el mensaje recibido es un ObjectMessage
