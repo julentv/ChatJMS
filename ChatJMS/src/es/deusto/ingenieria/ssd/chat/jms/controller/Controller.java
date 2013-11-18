@@ -42,7 +42,6 @@ public class Controller {
 	public MulticastSocket multicastSocket;
 	public User connectedUser;
 	public User chatReceiver;
-	private Message message;
 	private UserList userList;
 	private SimpleDateFormat textFormatter = new SimpleDateFormat("HH:mm:ss");
 	// indica si a llegado el primer mensaje de login
@@ -95,49 +94,48 @@ public class Controller {
 	public void proccesInputMessage(Message message)
 			throws IncorrectMessageException {
 		// el switch case con todos los mensajes aqui.
-		String messageToSend;
 		String warningMessage;
 		String time;
 		Message messageSent;
 		System.out.println("llego a procesar");
 		// Si el que envia el sms no soy yo mirar si el sms es para mi
 		if (this.firstArrived){
-			if (!(this.alreadyExistsSent && this.message.isNickAlreadyExistMessage())) {
-				boolean logginOrExisting=this.message.isLogginMessage()||this.message.isNickAlreadyExistMessage();
+			if (!(this.alreadyExistsSent && message.isNickAlreadyExistMessage())) {
+				boolean logginOrExisting=message.isLogginMessage()||message.isNickAlreadyExistMessage();
 				if (logginOrExisting
-						|| (!logginOrExisting && connectedUser!=null&& !this.message
+						|| (!logginOrExisting && connectedUser!=null&& !message
 								.getFrom().getNick()
 								.equals(connectedUser.getNick()))) {
 					
 
 					// si el sms es para mi procesar
-					if (this.message.getTo() == null
-							|| this.message.getTo().getNick()
+					if (message.getTo() == null
+							|| message.getTo().getNick()
 									.equals(connectedUser.getNick())) {
 
 						switch (message.getMessageType()) {
 
 						case Message.CLIENT_MESSAGE_LOGIN:
-							if (userList.getUserByNick(this.message.getFrom()
+							if (userList.getUserByNick(message.getFrom()
 									.getNick()) == null) {
 								// si no exist el ultimo de la lista envia la
 								// lista de usuarios
 									System.out.println("procesar login");
 								if (userList.getLastUser().getNick()
 										.equals(connectedUser.getNick())) {
-									this.userList.add(this.message.getFrom());
+									this.userList.add(message.getFrom());
 									messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 108, connectedUser, null);
 //									
 									publishMessage(messageSent);
 								} else {
-									this.userList.add(this.message.getFrom());
+									this.userList.add(message.getFrom());
 								}
 								this.window.refreshUserList();
 
 							} else {
 								// si hay nick ese usuario envia el sms de error
 								// 301
-								if (this.message.getFrom().getNick()
+								if (message.getFrom().getNick()
 										.equals(connectedUser.getNick())) {
 									messageSent= new Message(Calendar.getInstance().getTimeInMillis(),null, 301, connectedUser, null);
 									
@@ -183,7 +181,7 @@ public class Controller {
 
 							break;
 						case Message.CLIENT_MESSAGE_ACCEPT_INVITATION:
-							this.chatReceiver=this.message.getFrom();
+							this.chatReceiver=message.getFrom();
 							time = textFormatter.format(new Date());
 							warningMessage = " " + time
 									+ ": BEGINING OF THE CONVERSATION WITH ["
@@ -204,20 +202,20 @@ public class Controller {
 							this.chatReceiver=null;
 							break;
 						case Message.CLIENT_MESSAGE_CLOSE_CONNECTION:
-							this.userList.deleteByNick(this.message.getFrom()
+							this.userList.deleteByNick(message.getFrom()
 									.getNick());
 							this.window.refreshUserList();
 							break;
 						case Message.CLIENT_MESSAGE:
 							time = textFormatter.format(new Date());
 							warningMessage = " " + time + " - ["
-									+ this.message.getFrom().getNick() + "]: "
+									+ message.getFrom().getNick() + "]: "
 									+ message.getText().trim() + "\n";
 							this.window.appendMessageToHistory(warningMessage,
 									Color.MAGENTA);
 							break;
 						case Message.CLIENT_MESSAGE_USER_LIST:
-							this.userList.fromString(this.message.getText());
+							this.userList.fromString(message.getText());
 							this.window.refreshUserList();
 							break;
 						case Message.ERROR_MESSAGE_EXISTING_NICK:
@@ -285,12 +283,12 @@ public class Controller {
 				//connect
 				//JNDI Initial Context
 				//Context ctx = new InitialContext();
-				 //Connection Factory
+				//Connection Factory
 				TopicConnectionFactory topicConnectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
 				topicConnection = topicConnectionFactory.createTopicConnection();
 				
-				 topicSession = topicConnection.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
-				 myTopic = topicSession.createTopic(topicName);
+				topicSession = topicConnection.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
+				myTopic = topicSession.createTopic(topicName);
 				System.out.println("- Topic Connection created!");
 				
 				//Topic Listener
