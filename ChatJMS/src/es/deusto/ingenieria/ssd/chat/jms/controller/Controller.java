@@ -60,7 +60,7 @@ public class Controller {
 	public static final String MESSAGE_TYPE= "messageType";
 	public static final String NICK_TO= "nickTo";
 	public static final String NICK_FROM= "nickFrom";
-	
+	private Topic myTopic;
 
 	// tiene a la ventana y el hilo
 	public Controller(JFrameMainWindow jFrameMainWindow) {
@@ -99,7 +99,7 @@ public class Controller {
 		String warningMessage;
 		String time;
 		Message messageSent;
-		
+		System.out.println("llego a procesar");
 		// Si el que envia el sms no soy yo mirar si el sms es para mi
 		if (this.firstArrived){
 			if (!(this.alreadyExistsSent && this.message.isNickAlreadyExistMessage())) {
@@ -122,7 +122,7 @@ public class Controller {
 									.getNick()) == null) {
 								// si no exist el ultimo de la lista envia la
 								// lista de usuarios
-
+									System.out.println("procesar login");
 								if (userList.getLastUser().getNick()
 										.equals(connectedUser.getNick())) {
 									this.userList.add(this.message.getFrom());
@@ -277,63 +277,61 @@ public class Controller {
 		return this.chatReceiver != null;
 	}
 
-	public boolean connect(String ip, int port, String nick) throws IOException {
-		
-		try {
-			this.initFlags();
-			this.port = port;
-			//connect
-			//JNDI Initial Context
-			Context ctx = new InitialContext();
-			 //Connection Factory
-			TopicConnectionFactory topicConnectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
-			
-			topicConnection = topicConnectionFactory.createTopicConnection();
-			TopicSession topicSession = topicConnection.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
-			Topic myTopic = topicSession.createTopic(topicName);
-			System.out.println("- Topic Connection created!");
-			
-			//Topic Listener
-			topicSubscriber = topicSession.createSubscriber(myTopic, null, false);
-			TopicListener topicListener = new TopicListener(this);
-			topicSubscriber.setMessageListener(topicListener);
-			
-			//Begin message delivery
-			topicConnection.start();
-			
-			//Wait for messages
-			System.out.println("- Waiting 10 seconds for messages...");
-			Thread.sleep(10000);
-			
-			//TOPIC PUBLISHER
-			//Message Publisher
-			topicPublisher = topicSession.createPublisher(myTopic);
-			System.out.println("- TopicPublisher created!");
-												
-			userList = new UserList();
-			this.connectedUser = new User(nick);
-			userList.add(connectedUser);
-			Message connnectMessage= new Message(Calendar.getInstance().getTimeInMillis(), null, 101, this.connectedUser, null);
-			//String message = "101&" + this.connectedUser.getNick();
-			publishMessage(connnectMessage);
-			
-			return true;
-		} catch (Exception e) {
-			System.err.println("# TopicPublisherTest Error: " + e.getMessage());
-			return false;
-		} 
-		finally {
+	public boolean connect(String ip, int port, String nick)  {
+					
 			try {
-				//Close resources
-				topicSubscriber.close();
-				topicPublisher.close();
-				topicSession.close();
-				topicConnection.close();
-				System.out.println("- Topic resources closed!");				
-			} catch (Exception ex) {
-				System.err.println("# TopicPublisherTest Error: " + ex.getMessage());
-			}			
-		}
+				this.initFlags();
+				this.port = port;
+				//connect
+				//JNDI Initial Context
+				//Context ctx = new InitialContext();
+				 //Connection Factory
+				TopicConnectionFactory topicConnectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+				topicConnection = topicConnectionFactory.createTopicConnection();
+				
+				 topicSession = topicConnection.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
+				 myTopic = topicSession.createTopic(topicName);
+				System.out.println("- Topic Connection created!");
+				
+				//Topic Listener
+				topicSubscriber = topicSession.createSubscriber(myTopic, null, false);
+				TopicListener topicListener = new TopicListener(this);
+				topicSubscriber.setMessageListener(topicListener);
+				
+				//Begin message delivery
+				topicConnection.start();
+			
+				//TOPIC PUBLISHER
+				//Message Publisher
+				topicPublisher = topicSession.createPublisher(myTopic);
+				System.out.println("- TopicPublisher created!");
+													
+				userList = new UserList();
+				this.connectedUser = new User(nick);
+				userList.add(connectedUser);
+				Message connnectMessage= new Message(Calendar.getInstance().getTimeInMillis(), null, 101, this.connectedUser, null);
+				//String message = "101&" + this.connectedUser.getNick();
+				publishMessage(connnectMessage);
+				
+				return true;
+			} catch (JMSException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return false;
+			} 
+				
+//		finally {
+//			try {
+//				//Close resources
+//				topicSubscriber.close();
+//				topicPublisher.close();
+//				topicSession.close();
+//				topicConnection.close();
+//				System.out.println("- Topic resources closed!");				
+//			} catch (Exception ex) {
+//				System.err.println("# TopicPublisherTest Error: " + ex.getMessage());
+//			}			
+//		}
 		
 		
 		
@@ -342,7 +340,7 @@ public class Controller {
 	public void publishMessage(Message message){
 		//Text Message
 		javax.jms.Message publishMessage;
-		
+		String nickTo;
 		try {
 			
 			//Message Headers
@@ -363,7 +361,12 @@ public class Controller {
 			
 			//Message Properties
 			publishMessage.setIntProperty("messageType", message.getMessageType());
-			publishMessage.setStringProperty("nickTo", message.getTo().getNick());
+			if(message.getTo()==null){
+				nickTo="";
+			}else{
+				nickTo=message.getTo().getNick();
+			}
+			publishMessage.setStringProperty("nickTo", nickTo);
 			publishMessage.setStringProperty("nickFrom", message.getFrom().getNick());
 			
 			//Publish the Messages

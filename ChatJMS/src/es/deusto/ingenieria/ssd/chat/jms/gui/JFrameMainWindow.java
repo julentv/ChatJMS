@@ -260,9 +260,6 @@ public class JFrameMainWindow extends JFrame implements Observer, WindowListener
 				this.textAreaHistory.setText("");
 				this.textAreaSendMsg.setText("");
 				this.controller.connect(this.txtFieldServerIP.getText(), port, txtFieldNick.getText());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				JOptionPane.showMessageDialog(this, "Connection error", "Connection error", JOptionPane.ERROR_MESSAGE);
 			} catch (NumberFormatException nfe){
 				nfe.printStackTrace();
 				JOptionPane.showMessageDialog(this, "Server port must be an integer", "Server port error", JOptionPane.ERROR_MESSAGE);

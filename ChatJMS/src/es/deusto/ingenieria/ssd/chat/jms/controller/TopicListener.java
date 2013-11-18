@@ -23,6 +23,7 @@ public class TopicListener implements MessageListener {
 			try {
 				System.out.println("   - TopicListener: " + message.getClass().getSimpleName() + " received!");				
 				es.deusto.ingenieria.ssd.chat.jms.data.Message mensajeParseado=generateMessage(message);
+				System.out.println("mensaje de "+ mensajeParseado.getFrom().getNick()+"mensaje: "+mensajeParseado.getMessageType());
 				this.controller.proccesInputMessage(mensajeParseado);				
 			} catch (JMSException ex) {
 				System.err.println("# TopicListener error: " + ex.getMessage());
