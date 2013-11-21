@@ -98,7 +98,6 @@ public class Controller {
 		String warningMessage;
 		String time;
 		Message messageSent;
-		System.out.println("llego a procesar");
 		// Si el que envia el sms no soy yo mirar si el sms es para mi
 		if (this.firstArrived){
 			if (!(this.alreadyExistsSent && message.isNickAlreadyExistMessage())) {
@@ -121,7 +120,7 @@ public class Controller {
 									.getNick()) == null) {
 								// si no exist el ultimo de la lista envia la
 								// lista de usuarios
-									System.out.println("procesar login");
+									
 								if (userList.getLastUser().getNick()
 										.equals(connectedUser.getNick())) {
 									this.userList.add(message.getFrom());
@@ -226,7 +225,7 @@ public class Controller {
 						this.userList = new UserList();
 						this.window.refreshUserList();
 						this.window.toDisconnectionMode();
-						this.multicastSocket.close();
+						
 							}
 							
 							break;
@@ -250,22 +249,7 @@ public class Controller {
 
 	}
 
-//	private void sendDatagramPacket(String message) {
-//		try {
-//			DatagramPacket messageOut = new DatagramPacket(message.getBytes(),
-//					message.length(), group, port);
-//			multicastSocket.send(messageOut);
-//			System.out.println(" - Sent a message to '"
-//					+ messageOut.getAddress().getHostAddress() + ":"
-//					+ messageOut.getPort() + "' -> "
-//					+ new String(messageOut.getData()));
-//
-//		} catch (SocketException e) {
-//			System.err.println("# Socket Error: " + e.getMessage());
-//		} catch (IOException e) {
-//			System.err.println("# IO Error: " + e.getMessage());
-//		}
-//	}
+
 
 	public boolean isConnected() {
 		return this.connectedUser != null;
@@ -281,8 +265,7 @@ public class Controller {
 				this.initFlags();
 				this.port = port;
 				//connect
-				//JNDI Initial Context
-				//Context ctx = new InitialContext();
+				
 				//Connection Factory
 				TopicConnectionFactory topicConnectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
 				topicConnection = topicConnectionFactory.createTopicConnection();
