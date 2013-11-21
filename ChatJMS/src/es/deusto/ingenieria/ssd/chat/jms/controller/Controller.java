@@ -293,7 +293,7 @@ public class Controller {
 				Message connnectMessage= new Message(Calendar.getInstance().getTimeInMillis(), null, 101, this.connectedUser, null);
 				//String message = "101&" + this.connectedUser.getNick();
 				publishMessage(connnectMessage);
-				System.out.println("aaaaaaaaa");
+				
 				return true;
 			} catch (JMSException e) {
 				// TODO Auto-generated catch block
