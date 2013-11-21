@@ -253,6 +253,7 @@ public class Controller {
 
 
 	public void closeResources() throws JMSException{
+		
 		topicSubscriber.close();
 		topicPublisher.close();
 		topicSession.close();
@@ -376,11 +377,14 @@ public class Controller {
 			}
 			Message message= new Message(Calendar.getInstance().getTimeInMillis(),null, 106, this.connectedUser, null);
 			//message = "106&"+this.connectedUser.getNick();
-			//sendDatagramPacket(message);
-			publishMessage(message);
-			//Close resources
-			closeResources();
-			System.out.println("- Topic resources closed!");
+			if(isConnected()){
+				//sendDatagramPacket(message);
+				publishMessage(message);
+				//Close resources
+				closeResources();
+				System.out.println("- Topic resources closed!");
+			}
+			
 			this.connectedUser = null;
 			this.chatReceiver = null;
 			
