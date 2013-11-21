@@ -31,6 +31,8 @@ public class TopicListener implements MessageListener {
 			} catch (IncorrectMessageException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} catch (Exception excep){
+				excep.printStackTrace();
 			}
 		}
 		
@@ -43,7 +45,7 @@ public class TopicListener implements MessageListener {
 			//si el usuario del que proviene el mensaje no existe en la lista se crea
 			mensajeParseado.setFrom(new User(message.getStringProperty(Controller.NICK_FROM)));
 		}
-		if(!message.getStringProperty(Controller.NICK_FROM).equals("")){
+		if(!message.getStringProperty(Controller.NICK_TO).equals("")){
 			//hay user to --> meterlo en el mensaje
 			mensajeParseado.setTo(controller.getUserList().getUserByNick(message.getStringProperty(Controller.NICK_TO)));
 		}

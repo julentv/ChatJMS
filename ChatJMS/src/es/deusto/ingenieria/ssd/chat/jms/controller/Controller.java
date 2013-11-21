@@ -221,10 +221,11 @@ public class Controller {
 							if(message.getFrom().getNick().equals(this.connectedUser.getNick())){
 								this.window
 								.showMessage("The introduced nick already exists");
-						this.connectedUser = null;
-						this.userList = new UserList();
-						this.window.refreshUserList();
-						this.window.toDisconnectionMode();
+								this.connectedUser = null;
+								this.userList = new UserList();
+								this.window.refreshUserList();
+								this.window.toDisconnectionMode();
+								//cerrar toda la conexion.
 						
 							}
 							
