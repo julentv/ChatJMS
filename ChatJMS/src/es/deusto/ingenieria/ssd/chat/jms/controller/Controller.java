@@ -93,7 +93,7 @@ public class Controller {
 	}
 
 	public void proccesInputMessage(Message message)
-			throws IncorrectMessageException {
+			throws IncorrectMessageException, JMSException {
 		// el switch case con todos los mensajes aqui.
 		String warningMessage;
 		String time;
@@ -225,8 +225,9 @@ public class Controller {
 								this.userList = new UserList();
 								this.window.refreshUserList();
 								this.window.toDisconnectionMode();
-								//cerrar toda la conexion.
-						
+								
+								//Close resources
+								closeResources();
 							}
 							
 							break;
@@ -251,7 +252,12 @@ public class Controller {
 	}
 
 
-
+	public void closeResources() throws JMSException{
+		topicSubscriber.close();
+		topicPublisher.close();
+		topicSession.close();
+		topicConnection.close();
+	}
 	public boolean isConnected() {
 		return this.connectedUser != null;
 	}
@@ -373,10 +379,7 @@ public class Controller {
 			//sendDatagramPacket(message);
 			publishMessage(message);
 			//Close resources
-			topicSubscriber.close();
-			topicPublisher.close();
-			topicSession.close();
-			topicConnection.close();
+			closeResources();
 			System.out.println("- Topic resources closed!");
 			this.connectedUser = null;
 			this.chatReceiver = null;
